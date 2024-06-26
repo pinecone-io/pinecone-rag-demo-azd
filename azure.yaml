@@ -5,11 +5,19 @@ metadata:
   template: nextjs-aca@0.1.0
 hooks:
   preprovision:
-    shell: pwsh
-    run: ./.azd/hooks/preprovision.ps1
+    windows:
+      shell: pwsh
+      run: ./.azd/hooks/preprovision.ps1
+    posix:
+      shell: sh
+      run: ./.azd/hooks/preprovision.sh
   postprovision:
-    shell: pwsh
-    run: ./.azd/hooks/postprovision.ps1
+    windows:
+      shell: pwsh
+      run: ./.azd/hooks/postprovision.ps1
+    posix:
+      shell: sh
+      run: ./.azd/hooks/postprovision.sh
 services:
   web:
     project: ./
