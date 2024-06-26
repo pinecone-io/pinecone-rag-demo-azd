@@ -1,96 +1,43 @@
-import Image from 'next/image'
-import { getCdnUrl } from '@/lib/url'
-import styles from './page.module.css'
+"use client";
 
-export default function Home() {
+import Chat from "@/components/Chat";
+import { Sidebar } from "@/components/Sidebar";
+import useRefreshIndex from '@/hooks/useRefreshIndex';
+import type { PineconeRecord } from "@pinecone-database/pinecone";
+import React, { useEffect, useState } from "react";
+import { FaGithub } from 'react-icons/fa';
+import AppContext from "./appContext";
+
+const Page: React.FC = () => {
+  const [context, setContext] = useState<{ context: PineconeRecord[] }[] | null>(null);
+  const { totalRecords, refreshIndex } = useRefreshIndex();
+
+  useEffect(() => {
+    if (totalRecords === 0) {
+      refreshIndex()
+    }
+  }, [refreshIndex, totalRecords])
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src={getCdnUrl('/vercel.svg')}
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
+    <AppContext.Provider value={{ totalRecords, refreshIndex }}>
+      <div className="flex flex-col justify-between h-screen bg-whitemx-auto max-w-full">
+        <div className="flex w-full flex-grow overflow-hidden relative">
+          <div style={{
+            backgroundColor: "#FBFBFC"
+          }} className="absolute transform translate-x-full transition-transform duration-500 ease-in-out right-0 w-2/3 h-full bg-white overflow-y-auto lg:static lg:translate-x-0 lg:w-2/5">
+            <Sidebar />
+          </div>
+          <Chat setContext={setContext} context={context} />
+        </div>
+        <div className="fixed top-0 right-0 p-4">
+          <a href="https://github.com/pinecone-io/pinecone-rag-demo" target="_blank" rel="noopener noreferrer">
+            <FaGithub size={32} />
           </a>
         </div>
       </div>
+    </AppContext.Provider>
+  );
+};
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src={getCdnUrl('/next.svg')}
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+export default Page;
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
-}

@@ -89,4 +89,4 @@ sed -i '' -e '$ s/,$//' "$output_path"
 echo '}' >> "$output_path"
 
 # Verify the content of the output file
-cat "$output_path"
+#cat "$output_path"

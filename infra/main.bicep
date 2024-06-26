@@ -37,6 +37,11 @@ var envVars = loadJsonContent('./env-vars.json')
 var projectName = envVars.PROJECT_NAME
 var webAppServiceName = envVars.SERVICE_WEB_SERVICE_NAME
 
+var pineconeApiKey = envVars.PINECONE_API_KEY
+var openaiApiKey = envVars.OPENAI_API_KEY
+var pineconeIndexName = envVars.PINECONE_INDEX
+var pineconeRegion = envVars.PINECONE_REGION
+
 // Generate a unique token to be used in naming resources
 var resourceToken = take(toLower(uniqueString(subscription().id, environmentName, location, projectName)), 4)
 
@@ -121,7 +126,7 @@ module containerRegistry './containers/container-registry.bicep' = {
   name: 'containerRegistry'
   scope: resourceGroup
   params: {
-    name: !empty(containerRegistryName) ? containerRegistryName : buildProjectResourceName(abbrs.containers.container_registry, projectName, environmentName, resourceToken, false)
+    name: !empty(containerRegistryName) ? containerRegistryName : buildProjectResourceName(abbrs.containers.container_registry, replace(projectName, '-', ''), environmentName, resourceToken, false)
     location: location
     tags: tags
     logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
@@ -218,6 +223,22 @@ module webAppServiceContainerApp './web-app.bicep' = {
       {
         name: 'SERVICE_WEB_SERVICE_NAME'
         value: webAppServiceName
+      }
+      {
+        name: 'PINECONE_API_KEY'
+        value: pineconeApiKey
+      }
+      {
+        name: 'OPENAI_API_KEY'
+        value: openaiApiKey
+      }
+      {
+        name: 'INDEX_NAME'
+        value: pineconeIndexName
+      }
+      {
+        name: 'PINECONE_REGION'
+        value: pineconeRegion
       }
     ]
     targetPort: 3000

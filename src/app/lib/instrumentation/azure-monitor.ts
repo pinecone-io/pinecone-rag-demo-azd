@@ -25,10 +25,8 @@ if (connectionString) {
       mySql: { enabled: false },
       postgreSql: { enabled: false },
       redis: { enabled: false },
-      redis4: { enabled: false }
-    },
-    logInstrumentationOptions: {
-      console: { enabled: true },
+      redis4: { enabled: false },
+      //console: { enabled: true },
       bunyan: { enabled: false },
       winston: { enabled: false }
     }
