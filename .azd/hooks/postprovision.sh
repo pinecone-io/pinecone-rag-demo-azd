@@ -5,15 +5,53 @@ merge_env_files() {
     local with=$2
     local output=$3
 
-    declare -A hash
+    local -a temp_vars=()
+    local -a merged_vars=()
 
-    while IFS='=' read -r key value; do
-        hash[$key]=$value
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Remove comments and trim whitespace
+        line=$(echo "$line" | cut -d'#' -f1 )
+        # Trim whitespace
+        line=$(echo "$line" | sed 's/^[ \t]*//;s/[ \t]*$//')
+
+        # Skip empty lines
+        if [[ -z $line ]]; then
+            continue
+        fi
+
+        # Split the line into key and value
+        IFS='=' read -r key value <<< "$line"
+
+        # Remove newlines and carriage returns
+        value=$(echo "$value" | tr -d '\n\r')
+
+        # Store the key-value pair in the temp array
+        temp_vars+=("$key=$value")
     done < <(cat "$base" "$with")
 
+    for entry in "${temp_vars[@]}"; do
+        key=$(echo "$entry" | cut -d'=' -f1)
+        value=$(echo "$entry" | cut -d'=' -f2-)
+        found=false
+
+        for i in "${!merged_vars[@]}"; do
+            if [[ "${merged_vars[$i]}" == "$key="* ]]; then
+                merged_vars[$i]="$key=$value"
+                found=true
+                break
+            fi
+        done
+
+        if [[ $found == false ]]; then
+            merged_vars+=("$key=$value")
+        fi
+    done
+
     {
-        for key in "${!hash[@]}"; do
-            echo "$key=${hash[$key]}"
+        for entry in "${merged_vars[@]}"; do
+            key=$(echo "$entry" | cut -d'=' -f1)
+            value=$(echo "$entry" | cut -d'=' -f2-)
+            echo "$key=$value"
         done | sort
     } > "$output"
 }
