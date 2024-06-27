@@ -1,6 +1,6 @@
 import { Pinecone } from '@pinecone-database/pinecone'
 import { NextResponse } from 'next/server'
-import { connectPinecone } from '@/lib/pinecone'
+import { connectPinecone, indexName } from '@/lib/pinecone'
 
 export async function POST() {
   // Instantiate a new Pinecone client
