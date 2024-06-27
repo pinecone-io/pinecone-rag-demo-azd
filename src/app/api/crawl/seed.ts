@@ -6,6 +6,7 @@ import { Pinecone, PineconeRecord } from "@pinecone-database/pinecone";
 import { ServerlessSpecCloudEnum } from '@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch';
 import md5 from "md5";
 import { Crawler, Page } from "./crawler";
+import { connectPinecone, indexName } from '@/lib/pinecone';
 
 interface SeedOptions {
   splittingMethod: string
@@ -18,10 +19,10 @@ const PINECONE_CLOUD = process.env.PINECONE_CLOUD || 'aws'
 
 type DocumentSplitter = RecursiveCharacterTextSplitter | MarkdownTextSplitter
 
-async function seed(url: string, limit: number, indexName: string, options: SeedOptions) {
+async function seed(url: string, limit: number, options: SeedOptions) {
   try {
     // Initialize the Pinecone client
-    const pinecone = new Pinecone();
+    const pinecone = await connectPinecone();
 
     // Destructure the options object
     const { splittingMethod, chunkSize, chunkOverlap } = options;
