@@ -123,7 +123,7 @@ export const Sidebar: React.FC = () => {
       <div style={{ ...styles.textHeaderWrapper, flexDirection: "column" as "column" }} className="w-full">
         <Header />
         <div style={{ marginTop: 24, marginBottom: 24 }}>
-          This RAG chatbot uses Pinecone and Vercel&apos;s AI SDK to demonstrate a URL crawl, data chunking and embedding, and semantic questioning.
+          This RAG chatbot uses Pinecone and OpenAI to demonstrate a URL crawl, data chunking and embedding, and semantic questioning.
         </div>
       </div>
       <div className="flex flex-column w-full" style={{ ...styles.textHeaderWrapper, flexDirection: "column", }}>
@@ -210,22 +210,22 @@ export const Sidebar: React.FC = () => {
         <div className="text-[#1B17F5] ml-auto cursor-pointer text-xs" onClick={handleClearIndexClick} data-testid="clear-button">Clear</div>
       </div>
       {(
-        <div className={`text-xs mt-4 
-                        transition-all 
-                        duration-500 
-                        ease-in-out 
-                        transform ${clearIndexComplete ? "translate-y-0" : "translate-y-16"} 
-                        opacity-${clearIndexComplete ? "100" : "0"} 
+        <div className={`text-xs mt-4
+                        transition-all
+                        duration-500
+                        ease-in-out
+                        transform ${clearIndexComplete ? "translate-y-0" : "translate-y-16"}
+                        opacity-${clearIndexComplete ? "100" : "0"}
                         ${clearIndexComplete ? "h-auto" : "h-0"}`}>
           Index cleared
         </div>
       )}
       {(
-        <div className={`text-xs mt-2  
-                        transition-all 
-                        duration-500 
-                        ease-in-out 
-                        transform ${crawling ? "translate-y-0" : "translate-y-16"} 
+        <div className={`text-xs mt-2
+                        transition-all
+                        duration-500
+                        ease-in-out
+                        transform ${crawling ? "translate-y-0" : "translate-y-16"}
                         opacity-${crawling ? "100" : "0"} ${crawling ? "h-auto" : "h-0"}`}>
           <CircularProgress size={10} sx={{
             color: "black",
