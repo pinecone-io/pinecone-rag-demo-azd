@@ -10,8 +10,8 @@ export default function Header({ className }: { className?: string }) {
       <Image
         src={AzureLogo}
         alt="azure-logo"
-        width="105.719"
-        height="23.895"
+        width="50"
+        height="50"
         className="mr-3 mt-2"
       />
     </header>
