@@ -2,7 +2,7 @@
 
 name: pinecone-rag-demo
 metadata:
-  template: nextjs-aca@0.1.0
+  template: pinecone-rag-demo@0.1.0
 hooks:
   preprovision:
     windows:
