@@ -21,7 +21,7 @@ jobs:
       - name: Set environment
         id: set_env
         run: |
-          echo "Running on branch $env:GITHUB_REF"
+          echo "Running on branch $GITHUB_REF"
           if ($GITHUB_REF -eq "refs/heads/main") {
             export $GITHUB_OUTPUT "env_name=production"
           } else {
