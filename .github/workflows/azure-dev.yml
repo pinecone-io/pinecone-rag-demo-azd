@@ -4,6 +4,7 @@ on:
     # Run when commits are pushed to main branch
     branches:
       - main
+      - get-github-actions-working
 
 # GitHub Actions workflow to deploy to Azure using azd
 # To configure required secrets for connecting to Azure, run `azd pipeline config`
@@ -19,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set environment
+        shell: bash
         id: set_env
         run: |
           echo "Running on branch $GITHUB_REF"
