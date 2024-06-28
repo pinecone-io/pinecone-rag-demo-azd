@@ -28,6 +28,7 @@ jobs:
           else
             echo "env_name=unknown" >> $GITHUB_ENV
             echo "env_name=unknown" >> $GITHUB_OUTPUT
+          fi
         env:
           GITHUB_REF: ${{ github.ref }}
 
