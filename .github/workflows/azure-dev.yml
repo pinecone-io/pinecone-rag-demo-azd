@@ -1,141 +1,133 @@
 on:
-  workflow_dispatch:
-  push:
-    # Run when commits are pushed to main branch
-    branches:
-      - main
+    workflow_dispatch:
+    push:
+      # Run when commits are pushed to main branch
+      branches:
+        - main
 
-# GitHub Actions workflow to deploy to Azure using azd
-# To configure required secrets for connecting to Azure, run `azd pipeline config`
+  # GitHub Actions workflow to deploy to Azure using azd
+  # To configure required secrets for connecting to Azure, run `azd pipeline config`
 
-# Set up permissions for deploying with secretless Azure federated credentials
-# https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
-permissions:
-  id-token: write
-  contents: read
+  # Set up permissions for deploying with secretless Azure federated credentials
+  # https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-portal%2Clinux#set-up-azure-login-with-openid-connect-authentication
+  permissions:
+    id-token: write
+    contents: read
 
-jobs:
-  init:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set environment
-        id: set_env
-        run: |
-          echo "Running on branch $GITHUB_REF"
-          if ($GITHUB_REF -eq "refs/heads/main") {
-            export $GITHUB_OUTPUT "env_name=production"
-          } else {
-            export $GITHUB_OUTPUT "env_name=unknown"
-          }
-        shell: sh
-        env:
+  jobs:
+    init:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Set environment
+          id: set_env
+          run: |
+            echo "Running on branch $GITHUB_REF"
+            if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+              echo "env_name=production" >> $GITHUB_ENV
+              echo "env_name=production" >> $GITHUB_OUTPUT
+            else
+              echo "env_name=unknown" >> $GITHUB_ENV
+              echo "env_name=unknown" >> $GITHUB_OUTPUT
+            fi
+          env:
             GITHUB_REF: ${{ github.ref }}
 
-      - name: Show environment
-        run: echo "environment is set to '${{ steps.set_env.outputs.env_name }}'"
-        shell: sh
+        - name: Show environment
+          run: echo "environment is set to '${{ steps.set_env.outputs.env_name }}'"
 
-    outputs:
-      env_name: ${{ steps.set_env.outputs.env_name }}
+      outputs:
+        env_name: ${{ steps.set_env.outputs.env_name }}
 
-  deploy:
-    needs: [init]
-    if: needs.init.outputs.env_name != 'unknown'
-    runs-on: ubuntu-latest
-    environment:
-      name: ${{ needs.init.outputs.env_name }}
-    env:
-      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-      PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      PINECONE_INDEX: ${{ vars.PINECONE_INDEX }}
-      PINECONE_REGION: ${{ vars.PINECONE_REGION }}
-    steps:
-      - name: Show environment
-        run: echo "environment is set to '${{ needs.init.outputs.env_name }}'"
+    deploy:
+      needs: [init]
+      if: needs.init.outputs.env_name != 'unknown'
+      runs-on: ubuntu-latest
+      environment:
+        name: ${{ needs.init.outputs.env_name }}
+      env:
+        AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+        AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+        AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        PINECONE_INDEX: ${{ vars.PINECONE_INDEX }}
+        PINECONE_REGION: ${{ vars.PINECONE_REGION }}
+      steps:
+        - name: Show environment
+          run: echo "environment is set to '${{ needs.init.outputs.env_name }}'"
 
-      - name: Checkout
-        uses: actions/checkout@v3
+        - name: Checkout
+          uses: actions/checkout@v3
 
-      - name: Install azd
-        uses: Azure/setup-azd@v0.1.0
+        - name: Install azd
+          uses: Azure/setup-azd@v0.1.0
 
-      - name: Install Nodejs
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+        - name: Install Nodejs
+          uses: actions/setup-node@v3
+          with:
+            node-version: 18
 
-      - name: Log in with Azure (Federated Credentials)
-        if: ${{ env.AZURE_CLIENT_ID != '' }}
-        run: |
-          azd auth login `
-            --client-id "$Env:AZURE_CLIENT_ID" `
-            --federated-credential-provider "github" `
-            --tenant-id "$Env:AZURE_TENANT_ID"
-        shell: sh
+        - name: Log in with Azure (Federated Credentials)
+          if: ${{ env.AZURE_CLIENT_ID != '' }}
+          run: |
+            azd auth login \
+              --client-id "$AZURE_CLIENT_ID" \
+              --federated-credential-provider "github" \
+              --tenant-id "$AZURE_TENANT_ID"
 
-      - name: Log in with Azure (Client Credentials)
-        if: ${{ env.AZURE_CREDENTIALS != '' }}
-        run: |
-          client_id=$(echo $AZURE_CREDENTIALS | jq -r '.clientId')
-          client_secret=$(echo $AZURE_CREDENTIALS | jq -r '.clientSecret')
-          subscription_id=$(echo $AZURE_CREDENTIALS | jq -r '.subscriptionId')
-          tenant_id=$(echo $AZURE_CREDENTIALS | jq -r '.tenantId')
-          echo "::add-mask::$client_secret"
+        - name: Log in with Azure (Client Credentials)
+          if: ${{ env.AZURE_CREDENTIALS != '' }}
+          run: |
+            client_id=$(echo $AZURE_CREDENTIALS | jq -r '.clientId')
+            client_secret=$(echo $AZURE_CREDENTIALS | jq -r '.clientSecret')
+            subscription_id=$(echo $AZURE_CREDENTIALS | jq -r '.subscriptionId')
+            tenant_id=$(echo $AZURE_CREDENTIALS | jq -r '.tenantId')
+            echo "::add-mask::$client_secret"
 
-          azd auth login \
-            --client-id $client_id \
-            --client-secret $client_secret \
-            --tenant-id $tenant_id
-        shell: sh
-        env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+            azd auth login \
+              --client-id $client_id \
+              --client-secret $client_secret \
+              --tenant-id $tenant_id
 
-      - name: Create .env.local file
-        run: npm run env:init
-        shell: sh
-        env:
-          SERVICE_WEB_MIN_LOG_LEVEL: ${{ vars.SERVICE_WEB_MIN_LOG_LEVEL }}
-          SERVICE_WEB_CONTAINER_CPU_CORE_COUNT: ${{ vars.SERVICE_WEB_CONTAINER_CPU_CORE_COUNT }}
-          SERVICE_WEB_CONTAINER_MEMORY: ${{ vars.SERVICE_WEB_CONTAINER_MEMORY }}
-          SERVICE_WEB_CONTAINER_MIN_REPLICAS: ${{ vars.SERVICE_WEB_CONTAINER_MIN_REPLICAS }}
-          SERVICE_WEB_CONTAINER_MAX_REPLICAS: ${{ vars.SERVICE_WEB_CONTAINER_MAX_REPLICAS }}
-          SERVICE_WEB_CUSTOM_DOMAIN_NAME: ${{ vars.SERVICE_WEB_CUSTOM_DOMAIN_NAME }}
-          SERVICE_WEB_CUSTOM_DOMAIN_CERT_ID: ${{ vars.SERVICE_WEB_CUSTOM_DOMAIN_CERT_ID }}
-          PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          PINECONE_REGION: ${{ vars.PINECONE_REGION }}
-          PINECONE_INDEX: ${{ vars.PINECONE_INDEX }}
+        - name: Create .env.local file
+          run: npm run env:init
+          env:
+            SERVICE_WEB_MIN_LOG_LEVEL: ${{ vars.SERVICE_WEB_MIN_LOG_LEVEL }}
+            SERVICE_WEB_CONTAINER_CPU_CORE_COUNT: ${{ vars.SERVICE_WEB_CONTAINER_CPU_CORE_COUNT }}
+            SERVICE_WEB_CONTAINER_MEMORY: ${{ vars.SERVICE_WEB_CONTAINER_MEMORY }}
+            SERVICE_WEB_CONTAINER_MIN_REPLICAS: ${{ vars.SERVICE_WEB_CONTAINER_MIN_REPLICAS }}
+            SERVICE_WEB_CONTAINER_MAX_REPLICAS: ${{ vars.SERVICE_WEB_CONTAINER_MAX_REPLICAS }}
+            SERVICE_WEB_CUSTOM_DOMAIN_NAME: ${{ vars.SERVICE_WEB_CUSTOM_DOMAIN_NAME }}
+            SERVICE_WEB_CUSTOM_DOMAIN_CERT_ID: ${{ vars.SERVICE_WEB_CUSTOM_DOMAIN_CERT_ID }}
+            PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+            PINECONE_REGION: ${{ vars.PINECONE_REGION }}
+            PINECONE_INDEX: ${{ vars.PINECONE_INDEX }}
 
-      - name: Provision Infrastructure
-        run: azd provision --no-prompt
-        shell: sh
-        env:
-          AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
-          AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          PINECONE_INDEX: ${{ vars.PINECONE_INDEX }}
-          PINECONE_REGION: ${{ vars.PINECONE_REGION }}
+        - name: Provision Infrastructure
+          run: azd provision --no-prompt
+          env:
+            AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+            AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+            AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+            PINECONE_INDEX: ${{ vars.PINECONE_INDEX }}
+            PINECONE_REGION: ${{ vars.PINECONE_REGION }}
 
-      - name: Domain Verification
-        run: npm run env:dv
-        shell: sh
-        env:
-          AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+        - name: Domain Verification
+          run: npm run env:dv
+          env:
+            AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
 
-      - name: Deploy Application
-        run: azd deploy --no-prompt
-        shell: sh
-        env:
-          AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
-          AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
-          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-          PINECONE_API_KEY: ${{ vars.PINECONE_API_KEY }}
-          OPENAI_API_KEY: ${{ vars.OPENAI_API_KEY }}
-          PINECONE_INDEX: ${{ vars.PINECONE_INDEX }}
-          PINECONE_REGION: ${{ vars.PINECONE_REGION }}
+        - name: Deploy Application
+          run: azd deploy --no-prompt
+          env:
+            AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+            AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+            AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+            PINECONE_API_KEY: ${{ vars.PINECONE_API_KEY }}
+            OPENAI_API_KEY: ${{ vars.OPENAI_API_KEY }}
+            PINECONE_INDEX: ${{ vars.PINECONE_INDEX }}
+            PINECONE_REGION: ${{ vars.PINECONE_REGION }}
