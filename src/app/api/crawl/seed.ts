@@ -6,16 +6,13 @@ import { Pinecone, PineconeRecord } from "@pinecone-database/pinecone";
 import { ServerlessSpecCloudEnum } from '@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch';
 import md5 from "md5";
 import { Crawler, Page } from "./crawler";
-import { connectPinecone, indexName } from '@/lib/pinecone';
+import { connectPinecone, getOrCreateIndex, INDEX_NAME } from '@/lib/pinecone';
 
 interface SeedOptions {
   splittingMethod: string
   chunkSize: number
   chunkOverlap: number
 }
-
-const PINECONE_REGION = process.env.PINECONE_REGION || 'us-west-2'
-const PINECONE_CLOUD = process.env.PINECONE_CLOUD || 'aws'
 
 type DocumentSplitter = RecursiveCharacterTextSplitter | MarkdownTextSplitter
 
@@ -31,7 +28,7 @@ async function seed(url: string, limit: number, options: SeedOptions) {
     const crawler = new Crawler(1, limit || 100);
 
     // Crawl the given URL and get the pages
-    const pages = await crawler.crawl(url) as Page[];
+    const pages = (await crawler.crawl(url)) as Page[]
 
     // Choose the appropriate document splitter based on the splitting method
     const splitter: DocumentSplitter = splittingMethod === 'recursive' ?
@@ -40,25 +37,8 @@ async function seed(url: string, limit: number, options: SeedOptions) {
     // Prepare documents by splitting the pages
     const documents = await Promise.all(pages.map(page => prepareDocument(page, splitter)));
 
-    // Create Pinecone index if it does not exist
-    const indexList = await pinecone.listIndexes();
-    const indexes = indexList.indexes
-    const indexExists = indexes && indexes.some(index => index.name === indexName)
-    if (!indexExists) {
-      await pinecone.createIndex({
-        name: indexName,
-        dimension: 1536,
-        waitUntilReady: true,
-        spec: {
-          serverless: {
-            region: PINECONE_REGION,
-            cloud: PINECONE_CLOUD as ServerlessSpecCloudEnum
-          }
-        }
-      });
-    }
-
-    const index = pinecone.Index(indexName)
+    // Get the Pinecone index
+    const index = await getOrCreateIndex(pinecone, INDEX_NAME)
 
     // Get the vector embeddings for the documents
     const vectors = await Promise.all(documents.flat().map(embedDocument));

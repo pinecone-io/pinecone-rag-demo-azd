@@ -1,31 +1,79 @@
-import { CreateIndexOptions, Pinecone } from "@pinecone-database/pinecone";
+import { CreateIndexOptions, Pinecone, Index } from '@pinecone-database/pinecone'
 import {
   CreateIndexRequestMetricEnum,
   CreateIndexRequestSpec,
-} from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch";
+  IndexList,
+  ServerlessSpecCloudEnum
+} from '@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch'
+import { prop } from 'cheerio/lib/api/attributes'
+import exp from 'constants'
+
+const PINECONE_REGION = process.env.PINECONE_REGION || 'us-west-2'
+const PINECONE_CLOUD =
+  (process.env.PINECONE_CLOUD as 'aws' | 'gcp' | 'azure') || 'aws'
+export const INDEX_NAME = process.env.PINECONE_INDEX || 'pinecone-azd-rag-demo'
 
 export type IndexProperties = {
-  name: string;
-  dimension: number;
-  metric: CreateIndexRequestMetricEnum;
+  name: string
+  dimension: number
+  waitUntilReady: boolean
+  metric: CreateIndexRequestMetricEnum
+  region: string
   cloud: 'aws' | 'gcp' | 'azure'
-  spec: CreateIndexRequestSpec;
-};
+  spec: CreateIndexRequestSpec
+}
 
-function connectPinecone(apiKey?: string): Pinecone {
-  const pineconeApiKey = apiKey ?? process.env.PINECONE_API_KEY;
+export function connectPinecone(): Pinecone {
+  const pineconeApiKey = process.env.PINECONE_API_KEY
 
   if (!pineconeApiKey) {
-    throw new Error('Pinecone API key is required but not provided.');
+    throw new Error('Pinecone API key is required but not provided.')
   }
 
   const pc = new Pinecone({
     apiKey: pineconeApiKey,
     sourceTag: 'pinecone_azd_rag_demo'
-  });
-
+  })
   return pc
 }
 
-const indexName = process.env.PINECONE_API_KEY ?? 'pinecone-azd-rag-demo';
-export { connectPinecone, indexName }
+export async function getOrCreateIndex(
+  pc: Pinecone,
+  indexName: string = process.env.PINECONE_INDEX || 'pinecone-azd-rag-demo',
+  dimension: number = 1536,
+  metric: CreateIndexRequestMetricEnum = 'cosine',
+  region: string = PINECONE_REGION,
+  cloud: 'aws' | 'gcp' | 'azure' = PINECONE_CLOUD as 'aws' | 'gcp' | 'azure'
+) {
+  const indexList = await pc.listIndexes()
+  const indexes = indexList.indexes
+  const indexExists =
+    indexes && indexes.some((index) => index.name === indexName)
+  if (!indexExists) {
+    // Create Pinecone index if it does not exist
+    var properties: IndexProperties = {
+      name: indexName,
+      dimension: dimension,
+      waitUntilReady: true,
+      metric: metric,
+      spec: {
+        serverless: {
+          region: region,
+          cloud: cloud as ServerlessSpecCloudEnum
+        }
+      }
+    }
+    try {
+      await pc.createIndex(properties);
+    } catch (error) {
+      throw error
+    }
+  }
+  const index = await pc.Index(indexName)
+  return index
+}
+
+export async function getIndex(pc: Pinecone, indexName: string) {
+  const index = await getOrCreateIndex(pc, indexName)
+  return index
+}

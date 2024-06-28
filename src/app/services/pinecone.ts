@@ -1,5 +1,5 @@
 import { Pinecone, type ScoredPineconeRecord } from "@pinecone-database/pinecone";
-import { connectPinecone } from "@/lib/pinecone";
+import { connectPinecone, getOrCreateIndex, INDEX_NAME } from "@/lib/pinecone";
 
 export type Metadata = {
   url: string,
@@ -13,12 +13,8 @@ const getMatchesFromEmbeddings = async (embeddings: number[], topK: number, name
   // Obtain a client for Pinecone
   const pinecone = await connectPinecone();
 
-  const indexName: string = process.env.PINECONE_INDEX || 'pinecone-azd-rag-demo'
-  if (indexName === '') {
-    throw new Error('PINECONE_INDEX environment variable not set')
-  }
   // Get the Pinecone index
-  const index = pinecone!.Index<Metadata>(indexName);
+  const index = await getOrCreateIndex(pinecone, INDEX_NAME);
 
   // Get the namespace
   const pineconeNamespace = index.namespace(namespace ?? '')
