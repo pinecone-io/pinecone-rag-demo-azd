@@ -27,6 +27,8 @@ jobs:
           if [ "$GITHUB_REF" = "refs/heads/main" ]; then
             echo "env_name=production" >> $GITHUB_ENV
             echo "env_name=production" >> $GITHUB_OUTPUT
+          elif [ "$GITHUB_REF" = "refs/heads/get-github-actions-working" ]; then
+            echo "env_name=testing" >> $GITHUB_ENV
           else
             echo "env_name=unknown" >> $GITHUB_ENV
             echo "env_name=unknown" >> $GITHUB_OUTPUT
