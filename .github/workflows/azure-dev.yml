@@ -27,13 +27,13 @@ jobs:
           } else {
             Add-Content $env:GITHUB_OUTPUT "env_name=unknown"
           }
-        shell: pwsh
+        shell: sh
         env:
             GITHUB_REF: ${{ github.ref }}
 
       - name: Show environment
         run: echo "environment is set to '${{ steps.set_env.outputs.env_name }}'"
-        shell: pwsh
+        shell: sh
 
     outputs:
       env_name: ${{ steps.set_env.outputs.env_name }}
@@ -49,6 +49,10 @@ jobs:
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+      PINECONE_API_KEY: ${{ vars.PINECONE_API_KEY }}
+      OPENAI_API_KEY: ${{ vars.OPENAI_API_KEY }}
+      PINECONE_INDEX: ${{ vars.PINECONE_INDEX }}
+      PINECONE_REGION: ${{ vars.PINECONE_REGION }}
     steps:
       - name: Show environment
         run: echo "environment is set to '${{ needs.init.outputs.env_name }}'"
@@ -71,7 +75,7 @@ jobs:
             --client-id "$Env:AZURE_CLIENT_ID" `
             --federated-credential-provider "github" `
             --tenant-id "$Env:AZURE_TENANT_ID"
-        shell: pwsh
+        shell: sh
 
       - name: Log in with Azure (Client Credentials)
         if: ${{ env.AZURE_CREDENTIALS != '' }}
@@ -83,13 +87,13 @@ jobs:
             --client-id "$($info.clientId)" `
             --client-secret "$($info.clientSecret)" `
             --tenant-id "$($info.tenantId)"
-        shell: pwsh
+        shell: sh
         env:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Create .env.local file
         run: npm run env:init
-        shell: pwsh
+        shell: sh
         env:
           SERVICE_WEB_MIN_LOG_LEVEL: ${{ vars.SERVICE_WEB_MIN_LOG_LEVEL }}
           SERVICE_WEB_CONTAINER_CPU_CORE_COUNT: ${{ vars.SERVICE_WEB_CONTAINER_CPU_CORE_COUNT }}
@@ -101,22 +105,30 @@ jobs:
 
       - name: Provision Infrastructure
         run: azd provision --no-prompt
-        shell: pwsh
+        shell: sh
         env:
           AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
           AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          PINECONE_API_KEY: ${{ vars.PINECONE_API_KEY }}
+          OPENAI_API_KEY: ${{ vars.OPENAI_API_KEY }}
+          PINECONE_INDEX: ${{ vars.PINECONE_INDEX }}
+          PINECONE_REGION: ${{ vars.PINECONE_REGION }}
 
       - name: Domain Verification
         run: npm run env:dv
-        shell: pwsh
+        shell: sh
         env:
           AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
 
       - name: Deploy Application
         run: azd deploy --no-prompt
-        shell: pwsh
+        shell: sh
         env:
           AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
           AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          PINECONE_API_KEY: ${{ vars.PINECONE_API_KEY }}
+          OPENAI_API_KEY: ${{ vars.OPENAI_API_KEY }}
+          PINECONE_INDEX: ${{ vars.PINECONE_INDEX }}
+          PINECONE_REGION: ${{ vars.PINECONE_REGION }}

@@ -24,7 +24,7 @@ variables:
 jobs:
 - job: init
   steps:
-  - pwsh: |
+  - sh: |
       Write-Output "environment is set to '$(env_name)'"
     displayName: Show environment
 
@@ -40,15 +40,15 @@ jobs:
         steps:
         - checkout: self
 
-        - pwsh: |
+        - sh: |
             Write-Output "environment is set to '$(env_name)'"
           displayName: Show environment
 
-        - pwsh: |
+        - sh: |
             npm run env:init
           displayName: Create .env.local file
 
-        - pwsh: |
+        - sh: |
             azd config set auth.useAzCliAuth "true"
           displayName: Configure AZD to Use AZ CLI Authentication
 
@@ -64,8 +64,12 @@ jobs:
             AZURE_ENV_NAME: $(AZURE_ENV_NAME)
             AZURE_LOCATION: $(AZURE_LOCATION)
             AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+            PINECONE_API_KEY: $(PINECONE_API_KEY)
+            OPENAI_API_KEY: $(OPENAI_API_KEY)
+            PINECONE_INDEX: $(PINECONE_INDEX)
+            PINECONE_REGION: $(PINECONE_REGION)
 
-        - pwsh: |
+        - sh: |
             npm run env:dv
           displayName: Domain Verification
 
@@ -81,3 +85,7 @@ jobs:
             AZURE_ENV_NAME: $(AZURE_ENV_NAME)
             AZURE_LOCATION: $(AZURE_LOCATION)
             AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+            PINECONE_API_KEY: $(PINECONE_API_KEY)
+            OPENAI_API_KEY: $(OPENAI_API_KEY)
+            PINECONE_INDEX: $(PINECONE_INDEX)
+            PINECONE_REGION: $(PINECONE_REGION)
