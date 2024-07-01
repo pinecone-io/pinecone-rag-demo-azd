@@ -5,8 +5,8 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "env:init": "sh ./.azd/scripts/create-env-local.sh",
-    "env:dv": "sh ./.azd/scripts/read-domain-verification-vars.sh",
+    "env:init": "bash ./.azd/scripts/create-env-local.sh",
+    "env:dv": "bash ./.azd/scripts/read-domain-verification-vars.sh",
     "lint": "next lint",
     "start": "next start"
   },
