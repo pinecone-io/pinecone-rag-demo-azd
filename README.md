@@ -27,14 +27,14 @@ The minimum environment variables and secrets you will need to set are:
 - AZURE_ENV_NAME: The name of your Azure environment.
 - AZURE_LOCATION: The Azure region you are using.
 
-There are other variables available but these optional.
+There are other variables available but those are optional.
 
 ### Proceeding with the first deployment
 
-The quickest way to try this `azd` template out is using [GitHub Codespaces](https://codespaces.new/pinecone-io/pinecone-rag-demo-azd) or in a [VS Code Dev Container](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/pinecone-io/pinecone-rag-demo-az):
+The quickest way to try this `azd` template out is using [GitHub Codespaces](https://docs.github.com/en/codespaces) or in a [VS Code Dev Container](https://code.visualstudio.com/docs/devcontainers/containers):
 
-[![Open in GitHub Codespaces](https://img.shields.io/static/v1?style=for-the-badge&label=GitHub+Codespaces&message=Open&color=brightgreen&logo=github)](https://codespaces.new/CMeeg/nextjs-aca)
-[![Open in Dev Container](https://img.shields.io/static/v1?style=for-the-badge&label=Dev+Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/CMeeg/nextjs-aca)
+[![Open in GitHub Codespaces](https://img.shields.io/static/v1?style=for-the-badge&label=GitHub+Codespaces&message=Open&color=brightgreen&logo=github)](https://codespaces.new/pinecone-io/pinecone-rag-demo-azd)
+[![Open in Dev Container](https://img.shields.io/static/v1?style=for-the-badge&label=Dev+Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/pinecone-io/pinecone-rag-demo-azd)
 
 Then from a Terminal:
 
