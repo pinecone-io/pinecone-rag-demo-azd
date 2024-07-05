@@ -1,4 +1,4 @@
-# nextjs-aca
+# pinecone-rag-demo-azd
 
 An `azd` ([Azure Developer CLI](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/overview)) template for getting a [Next.js](https://nextjs.org/) app running on Azure Container Apps with CDN and Application Insights.
 
@@ -14,6 +14,24 @@ Of course with this being an `azd` template you are free to build on top of the 
 ## Quickstart
 
 The quickest way to try this `azd` template out is using [GitHub Codespaces](https://docs.github.com/en/codespaces) or in a [VS Code Dev Container](https://code.visualstudio.com/docs/devcontainers/containers):
+
+### Setting up the environment
+
+Before starting, be sure you have set all of the required secrets and environment variables in your Github repo, under Settings -> Environments. Please see [Using environments for deployment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) for more details on how to set up environments.
+
+The minimum environment variables and secrets you will need to set are:
+
+- PINECONE_API_KEY: You can retrieve this from your [Pinecone project's list of API keys](https://app.pinecone.io/-/projects/-/keys).
+- OPENAI_API_KEY: From [your OpenAI project's keys](https://platform.openai.com/api-keys)
+- PINECONE_REGION: The region your index is in (or will be in).
+- PINECONE_INDEX: The name of your index. Defaults to "pinecone-azd-rag-demo".
+- AZURE_SUBSCRIPTION_ID: Run `azd config show` locally to retrieve your subscription ID.
+- AZURE_ENV_NAME: The name of your Azure environment.
+- AZURE_LOCATION: The Azure region you are using.
+
+There are other variables available but these optional.
+
+### Proceeding with the first deployment
 
 [![Open in GitHub Codespaces](https://img.shields.io/static/v1?style=for-the-badge&label=GitHub+Codespaces&message=Open&color=brightgreen&logo=github)](https://codespaces.new/CMeeg/nextjs-aca)
 [![Open in Dev Container](https://img.shields.io/static/v1?style=for-the-badge&label=Dev+Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/CMeeg/nextjs-aca)
@@ -50,33 +68,14 @@ If you do not have access to or do not want to work in Codespaces or a Dev Conta
 * [Node.js](https://nodejs.org/) v18.17 or later
   * This Node.js version is a [minimum requirement of Next.js](https://nextjs.org/docs/getting-started/installation)
   * Use of [`nvm`](https://github.com/nvm-sh/nvm) or [`fnm`](https://github.com/Schniz/fnm) is recommended
-* [PowerShell](https://github.com/PowerShell/PowerShell)
 * [Azure Developer CLI](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd)
 * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
-> The template was developed on a Windows machine, and has been tested in a Linux environment (in the Dev Container). macOS is supported, but has not been tested.
->
 > `azd` supports several [development environments](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/supported-languages-environments#supported-development-environments). This template was developed in VS Code, and has been tested in GitHub Codespaces and Dev Containers (via VS Code). Visual Studio has not been tested.
 >
 > `npm` is used as it is the "safest" default. You should be able to switch out for the package manager of your choice, but only `npm` has been tested.
 
 ✔️ Once you have everything installed you can clone this repo and [start developing](#developing-your-app-with-this-template) or [deploy to Azure with the `azd` CLI](#deploying-to-azure-with-the-azd-cli).
-
-## Developing your app with this template
-
-You should develop your Next.js app as [you normally would](https://nextjs.org/docs/app/building-your-application) with a couple of (hopefully minor) concessions:
-
-* As and when environment variables need to be added to a `.env.local` file that the the `.env.local.template` file is updated to include a matching entry with an empty or default value
-  * This is so that the `azd provision` and `azd deploy` hooks have context of all of the environment variables required by your app at build and at runtime
-  * See the [Environment variables](#environment-variables) section for a fuller description of why this is needed
-* To get the most out of the CDN and App Insights resources used by this template you should keep (or copy across) the relevant code and configuration assets related to these resources
-  * See the [Azure CDN](#azure-cdn) and [Application Insights](#application-insights) sections for more information
-
-> Some of the file and folder naming conventions used in this template are directly influenced by `azd` so it is a good idea to be familiar with those as renaming or moving things that [`azd` has a convention for](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/make-azd-compatible?pivots=azd-create#azd-conventions) will break the `azd` commands used to provision and deploy your app.
-
-⚡ As with any Next.js app you have the option of running your app in the [Development Server](https://nextjs.org/docs/getting-started/project-structure) or the [Node.js server](https://nextjs.org/docs/app/building-your-application/deploying#nodejs-server) locally, but because this is an `azd` template you also have the option of deploying your app to Azure [via the command line](#deploying-to-azure-with-the-azd-cli) if you want to test in a production-like environment, and then easily pull it all back down again when you are done.
-
-> This template is configured to create [`standalone` output](https://nextjs.org/docs/app/api-reference/next-config-js/output#automatically-copying-traced-files) when you run `next build`. This produces a smaller build output to keep the size of the Docker container deployed to Azure Container Apps as small as possible. However, if you are running `next build` locally this may not be desirable because you will receive a warning when you run `next start` and your app may not work as intended. You can remove `output: 'standalone'` from `next.config.js` in this situation, but it is advised to revert/not commit this change when you are done.
 
 ## Deploying to Azure with the `azd` CLI
 
@@ -325,6 +324,14 @@ You don't need to do anything specific to add the workflow in GitHub Actions, th
 
 1. Find and edit the Environment that you created in GitHub repo earlier
 2. Add Environment variables
+   * `PINECONE_API_KEY={your Pinecone API key}`
+     * As stated earlier, you can retrieve this from your [Pinecone project's list of API keys](https://app.pinecone.io/-/projects/-/keys).
+   * `OPENAI_API_KEY={your OpenAI API key}`
+     * This can be retrieved from your [OpenAI project](https://platform.openai.com/api-keys).
+   * `PINECONE_REGION={your Pinecone region}`
+     * The region your index is hosted in, or will be created in.
+   * `PINECONE_INDEX={your index name}`
+     * Defaults to `pinecone-rag-demo-azd`.
    * `AZURE_ENV_NAME=prod`
      * This doesn't need to match the GitHub Environment name and because it is used when generating Azure resource names it's a good idea to keep it short
    * `AZURE_TENANT_ID={tenant_id}`
@@ -340,12 +347,6 @@ You don't need to do anything specific to add the workflow in GitHub Actions, th
      * Assuming that you don't want your production app to scale to zero
 3. If you want to add additional variables (e.g. those found in the `.env.local.template` file) then you can continue to do so e.g. `SERVICE_WEB_CONTAINER_MAX_REPLICAS=5`
    * If you don't add them then they will fallback to any default value set in the app or in the `main.bicep` file
-
-💡 If you add additional environment variables for use in your app and want to override them in this environment then you can come back here later to add or change anything as needed.
-
-> If you add environment variables to `.env.local.template` you must also make sure you edit the `Create .env.local file` step of the `deploy` job in `.github/workflows/azure-dev.yml` to make them available as environment variables when `npm run env:init` is executed in the pipeline.
->
-> GitHub Actions doesn't automatically make environment variables available to scripts so they need to be added explicitly to this step (this is something you don't need to do in the AZDO pipeline, which does expose its environment variables to scripts implicitly).
 
 ### Azure DevOps Pipelines
 
