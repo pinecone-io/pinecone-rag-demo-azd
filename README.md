@@ -13,8 +13,6 @@ Of course with this being an `azd` template you are free to build on top of the 
 
 ## Quickstart
 
-The quickest way to try this `azd` template out is using [GitHub Codespaces](https://docs.github.com/en/codespaces) or in a [VS Code Dev Container](https://code.visualstudio.com/docs/devcontainers/containers):
-
 ### Setting up the environment
 
 Before starting, be sure you have set all of the required secrets and environment variables in your Github repo, under Settings -> Environments. Please see [Using environments for deployment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) for more details on how to set up environments.
@@ -32,6 +30,8 @@ The minimum environment variables and secrets you will need to set are:
 There are other variables available but these optional.
 
 ### Proceeding with the first deployment
+
+The quickest way to try this `azd` template out is using [GitHub Codespaces](https://codespaces.new/pinecone-io/pinecone-rag-demo-azd) or in a [VS Code Dev Container](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/pinecone-io/pinecone-rag-demo-az):
 
 [![Open in GitHub Codespaces](https://img.shields.io/static/v1?style=for-the-badge&label=GitHub+Codespaces&message=Open&color=brightgreen&logo=github)](https://codespaces.new/CMeeg/nextjs-aca)
 [![Open in Dev Container](https://img.shields.io/static/v1?style=for-the-badge&label=Dev+Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/CMeeg/nextjs-aca)
