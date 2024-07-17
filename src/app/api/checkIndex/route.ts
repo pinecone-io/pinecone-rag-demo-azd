@@ -8,11 +8,11 @@ export async function POST() {
   // Select the desired index
   try {
     await getOrCreateIndex(pinecone, INDEX_NAME)
-  } catch (e) {
-    console.error(e)
+  } catch (error) {
+    console.error(error)
     return NextResponse.json({
       success: false,
-      error: e.message || 'An unexpected error occurred'
+      error: (error as Error).cause || 'An unexpected error occurred'
     })
   }
   const index = await pinecone.Index(INDEX_NAME)
