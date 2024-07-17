@@ -1,4 +1,4 @@
-import { CreateIndexOptions, Pinecone, Index } from '@pinecone-database/pinecone'
+import { Pinecone, Index } from '@pinecone-database/pinecone'
 import {
   CreateIndexRequestMetricEnum,
   CreateIndexRequestSpec,
@@ -18,8 +18,6 @@ export type IndexProperties = {
   dimension: number
   waitUntilReady: boolean
   metric: CreateIndexRequestMetricEnum
-  region: string
-  cloud: 'aws' | 'gcp' | 'azure'
   spec: CreateIndexRequestSpec
 }
 
@@ -42,30 +40,34 @@ export async function getOrCreateIndex(
   indexName: string = process.env.PINECONE_INDEX || 'pinecone-azd-rag-demo',
   dimension: number = 1536,
   metric: CreateIndexRequestMetricEnum = 'cosine',
-  region: string = PINECONE_REGION,
-  cloud: 'aws' | 'gcp' | 'azure' = PINECONE_CLOUD as 'aws' | 'gcp' | 'azure'
+  spec: CreateIndexRequestSpec = {
+    serverless: {
+      region: PINECONE_REGION,
+      cloud: PINECONE_CLOUD
+    }
+  }
 ) {
+  console.log('Checking for index ', indexName)
   const indexList = await pc.listIndexes()
   const indexes = indexList.indexes
+  console.log('Indexes: ', indexes)
   const indexExists =
     indexes && indexes.some((index) => index.name === indexName)
   if (!indexExists) {
     // Create Pinecone index if it does not exist
+    console.log('Creating index ', indexName)
     var properties: IndexProperties = {
       name: indexName,
       dimension: dimension,
       waitUntilReady: true,
       metric: metric,
-      spec: {
-        serverless: {
-          region: region,
-          cloud: cloud as ServerlessSpecCloudEnum
-        }
-      }
+      spec: spec
     }
     try {
-      await pc.createIndex(properties);
+      await pc.createIndex(properties)
     } catch (error) {
+      console.error('Error creating index: ', error)
+      console.log('Properties: ', properties)
       throw error
     }
   }
