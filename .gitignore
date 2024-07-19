@@ -18,3 +18,8 @@ TODO.md
 
 .src
 .src.bak
+
+.github/workflows/
+.azdo/pipilines/
+.vscode
+.devcontainer
