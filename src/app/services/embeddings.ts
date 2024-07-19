@@ -1,23 +1,17 @@
+import { OpenAIClient, AzureKeyCredential } from '@azure/openai'
 
-import { OpenAIApi, Configuration } from "openai-edge";
-
-const config = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY
-})
-const openai = new OpenAIApi(config)
+const endpoint = process.env.AZURE_OPENAI_ENDPOINT || ''
+const apiKey = process.env.AZURE_OPENAI_API_KEY || ''
+const client = new OpenAIClient(endpoint, new AzureKeyCredential(apiKey))
 
 export async function getEmbeddings(input: string) {
   try {
-    const response = await openai.createEmbedding({
-      model: "text-embedding-ada-002",
-      input: input.replace(/\n/g, ' ')
-    })
-
-    const result = await response.json();
-    return result.data[0].embedding as number[]
-
+    const response = await client.getEmbeddings('text-embedding-ada-002', [
+      input.replace(/\n/g, ' ')
+    ])
+    return response.data[0].embedding as number[]
   } catch (e) {
-    console.log("Error calling OpenAI embedding API: ", e);
-    throw new Error(`Error calling OpenAI embedding API: ${e}`);
+    console.log('Error calling Azure OpenAI embedding API: ', e)
+    throw new Error(`Error calling Azure OpenAI embedding API: ${e}`)
   }
 }
