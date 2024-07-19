@@ -1,8 +1,12 @@
 import { Metadata, getContext } from '@/services/context'
 import type { PineconeRecord } from '@pinecone-database/pinecone'
-import { Message, OpenAIStream, StreamingTextResponse, experimental_StreamData } from 'ai'
+import {
+  Message,
+  OpenAIStream,
+  StreamingTextResponse,
+  experimental_StreamData
+} from 'ai'
 import { Configuration, OpenAIApi } from 'openai-edge'
-
 
 // Create an OpenAI API client (that's edge friendly!)
 const config = new Configuration({
@@ -15,21 +19,26 @@ export const runtime = 'edge'
 
 export async function POST(req: Request) {
   try {
-
     const { messages, withContext, messageId } = await req.json()
     // Get the last message
     const lastMessage = messages[messages.length - 1]
 
-
     // Get the context from the last message
-    const context = withContext ? await getContext(lastMessage.content, '', 3000, 0.8, false) : ''
+    const context = withContext
+      ? await getContext(lastMessage.content, '', 3000, 0.8, false)
+      : ''
 
-    console.log("withContext", context.length)
+    console.log('withContext', context.length)
 
-    const docs = (withContext && context.length > 0) ? (context as PineconeRecord[]).map(match => (match.metadata as Metadata).chunk) : [];
+    const docs =
+      withContext && context.length > 0
+        ? (context as PineconeRecord[]).map(
+            (match) => (match.metadata as Metadata).chunk
+          )
+        : []
 
     // Join all the chunks of text together, truncate to the maximum number of tokens, and return the result
-    const contextText = docs.join("\n").substring(0, 3000)
+    const contextText = docs.join('\n').substring(0, 3000)
 
     const prompt = [
       {
@@ -47,46 +56,48 @@ export async function POST(req: Request) {
       If the context does not provide the answer to question, the AI assistant will say, "I'm sorry, but I don't know the answer to that question".
       AI assistant will not apologize for previous responses, but instead will indicated new information was gained.
       AI assistant will not invent anything that is not drawn directly from the context.
-      `,
-      },
+      `
+      }
     ]
 
     const sanitizedMessages = messages.map((message: any) => {
-      const { createdAt, id, ...rest } = message;
-      return rest;
-    });
+      const { createdAt, id, ...rest } = message
+      return rest
+    })
 
     // Ask OpenAI for a streaming chat completion given the prompt
     const response = await openai.createChatCompletion({
       model: 'gpt-3.5-turbo',
       stream: true,
-      messages: [...prompt, ...sanitizedMessages.filter((message: Message) => message.role === 'user')]
+      messages: [
+        ...prompt,
+        ...sanitizedMessages.filter(
+          (message: Message) => message.role === 'user'
+        )
+      ]
     })
 
-    const data = new experimental_StreamData();
+    const data = new experimental_StreamData()
 
     const stream = OpenAIStream(response, {
       onFinal(completion) {
         // IMPORTANT! you must close StreamData manually or the response will never finish.
-        data.close();
+        data.close()
       },
       // IMPORTANT! until this is stable, you must explicitly opt in to supporting streamData.
-      experimental_streamData: true,
-    });
+      experimental_streamData: true
+    })
 
     if (withContext) {
       data.append({
-        context: [...context as PineconeRecord[]]
+        context: [...(context as PineconeRecord[])]
       })
-
     }
 
     // IMPORTANT! If you aren't using StreamingTextResponse, you MUST have the `X-Experimental-Stream-Data: 'true'` header
     // in your response so the client uses the correct parsing logic.
-    return new StreamingTextResponse(stream, {}, data);
-
-
+    return new StreamingTextResponse(stream, {}, data)
   } catch (e) {
-    throw (e)
+    throw e
   }
 }
