@@ -1,5 +1,5 @@
-import { ICard } from "./Card";
-import { IUrlEntry } from "./UrlButton";
+import { ICard } from './Card'
+import { IUrlEntry } from './UrlButton'
 
 export async function crawlDocument(
   url: string,
@@ -13,49 +13,49 @@ export async function crawlDocument(
     seeded.map((seed: IUrlEntry) =>
       seed.url === url ? { ...seed, loading: true } : seed
     )
-  );
-  const response = await fetch("/api/crawl", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  )
+  const response = await fetch('/api/crawl', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       url,
       options: {
         splittingMethod,
         chunkSize,
-        overlap,
-      },
-    }),
-  });
+        overlap
+      }
+    })
+  })
 
-  const { documents } = await response.json();
+  const { documents } = await response.json()
 
-  setCards(documents);
+  setCards(documents)
 
   setEntries((prevEntries: IUrlEntry[]) =>
     prevEntries.map((entry: IUrlEntry) =>
       entry.url === url ? { ...entry, seeded: true, loading: false } : entry
     )
-  );
+  )
 }
 
 export async function clearIndex(
   setEntries: React.Dispatch<React.SetStateAction<IUrlEntry[]>>,
   setCards: React.Dispatch<React.SetStateAction<ICard[]>>
 ) {
-  const response = await fetch("/api/clearIndex", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-  });
+  const response = await fetch('/api/clearIndex', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
 
   if (response.ok) {
     setEntries((prevEntries: IUrlEntry[]) =>
       prevEntries.map((entry: IUrlEntry) => ({
         ...entry,
         seeded: false,
-        loading: false,
+        loading: false
       }))
-    );
-    setCards([]);
+    )
+    setCards([])
     return true
   }
 }
