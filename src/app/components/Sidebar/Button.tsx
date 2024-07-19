@@ -7,5 +7,5 @@ export function Button({ className, ...props }: any) {
       }
       {...props}
     />
-  );
+  )
 }
