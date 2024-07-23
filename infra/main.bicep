@@ -162,6 +162,31 @@ module webAppServiceCdn './cdn/cdn.bicep' = {
   }
 }
 
+module azureOpenAi 'core/ai/azure-openai.bicep' = {
+  name: 'openai'
+  scope: resourceGroup
+  params: {
+    name: '${abbrs.cognitiveServices.cognitiveServicesAccounts}${resourceToken}'
+    location: location
+    tags: tags
+    sku: {
+      name: 'S0'
+    }
+    deployments: [{
+      name: 'gpt-35-turbo-16k'
+      model: {
+        format: 'OpenAI'
+        name: 'gpt-35-turbo-16k'
+        version: azureOpenAIChatGptModelVersion
+      }
+      sku: {
+        name: 'Standard'
+        capacity: chatGptDeploymentCapacity
+      }
+    }]
+  }
+}
+
 module webAppServiceContainerApp './web-app.bicep' = {
   name: '${webAppServiceName}-container-app'
   scope: resourceGroup
@@ -244,33 +269,16 @@ module webAppServiceContainerApp './web-app.bicep' = {
         name: 'PINECONE_REGION'
         value: pineconeRegion
       }
+      {
+        name: 'AZURE_OPENAI_API_KEY'
+        value: azureOpenAi.outputs.apiKey
+      }
+      {
+        name: 'AZURE_OPENAI_ENDPOINT'
+        value: azureOpenAi.outputs.endpoint
+      }
     ]
     targetPort: 3000
-  }
-}
-
-module azureOpenAi 'core/ai/azure-openai.bicep' = {
-  name: 'openai'
-  scope: resourceGroup
-  params: {
-    name: '${abbrs.cognitiveServices.cognitiveServicesAccounts}${resourceToken}'
-    location: location
-    tags: tags
-    sku: {
-      name: 'S0'
-    }
-    deployments: [{
-      name: 'gpt-35-turbo-16k'
-      model: {
-        format: 'OpenAI'
-        name: 'gpt-35-turbo-16k'
-        version: azureOpenAIChatGptModelVersion
-      }
-      sku: {
-        name: 'Standard'
-        capacity: chatGptDeploymentCapacity
-      }
-    }]
   }
 }
 
