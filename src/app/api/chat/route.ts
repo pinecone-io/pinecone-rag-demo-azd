@@ -6,16 +6,15 @@ import {
   StreamingTextResponse,
   experimental_StreamData
 } from 'ai'
-import { Configuration, OpenAIApi } from 'openai-edge'
+import { OpenAIClient, AzureKeyCredential } from '@azure/openai'
+
+const endpoint = process.env['ENDPOINT'] || 'text-embedding-ada-002'
+const azureApiKey = process.env['AZURE_API_KEY'] || '<api key>'
+console.log('endpoint', endpoint)
+console.log('azureApiKey', azureApiKey)
 
 // Create an OpenAI API client (that's edge friendly!)
-const config = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY
-})
-const openai = new OpenAIApi(config)
-
-// IMPORTANT! Set the runtime to edge
-export const runtime = 'edge'
+const client = new OpenAIClient(endpoint, new AzureKeyCredential(azureApiKey))
 
 export async function POST(req: Request) {
   try {
@@ -48,7 +47,7 @@ export async function POST(req: Request) {
       AI is a well-behaved and well-mannered individual.
       AI is always friendly, kind, and inspiring, and he is eager to provide vivid and thoughtful responses to the user.
       AI has the sum of all knowledge in their brain, and is able to accurately answer nearly any question about any topic in conversation.
-      AI assistant is a big fan of Pinecone and Vercel.
+      AI assistant is a big fan of Pinecone and Azure.
       START CONTEXT BLOCK
       ${contextText}
       END OF CONTEXT BLOCK
@@ -66,20 +65,19 @@ export async function POST(req: Request) {
     })
 
     // Ask OpenAI for a streaming chat completion given the prompt
-    const response = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
-      stream: true,
-      messages: [
+    const deploymentId = 'text-embedding-ada-002'
+    console.log('client', client)
+    const events = await client.streamChatCompletions(
+      deploymentId,
+      [
         ...prompt,
-        ...sanitizedMessages.filter(
-          (message: Message) => message.role === 'user'
-        )
-      ]
-    })
-
+        ...sanitizedMessages.filter((message: Message) => message.role === 'user')
+      ],
+      { maxTokens: 128 }
+    )
     const data = new experimental_StreamData()
 
-    const stream = OpenAIStream(response, {
+    /*const stream = OpenAIStream(response, {
       onFinal(completion) {
         // IMPORTANT! you must close StreamData manually or the response will never finish.
         data.close()
@@ -87,7 +85,7 @@ export async function POST(req: Request) {
       // IMPORTANT! until this is stable, you must explicitly opt in to supporting streamData.
       experimental_streamData: true
     })
-
+*/
     if (withContext) {
       data.append({
         context: [...(context as PineconeRecord[])]
@@ -96,7 +94,7 @@ export async function POST(req: Request) {
 
     // IMPORTANT! If you aren't using StreamingTextResponse, you MUST have the `X-Experimental-Stream-Data: 'true'` header
     // in your response so the client uses the correct parsing logic.
-    return new StreamingTextResponse(stream, {}, data)
+    return new StreamingTextResponse(events, {}, data)
   } catch (e) {
     throw e
   }

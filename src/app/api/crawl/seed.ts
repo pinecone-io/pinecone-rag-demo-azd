@@ -6,8 +6,7 @@ import {
   MarkdownTextSplitter,
   RecursiveCharacterTextSplitter
 } from '@pinecone-database/doc-splitter'
-import { Pinecone, PineconeRecord } from '@pinecone-database/pinecone'
-import { ServerlessSpecCloudEnum } from '@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch'
+import { PineconeRecord } from '@pinecone-database/pinecone'
 import md5 from 'md5'
 import { Crawler, Page } from './crawler'
 import { connectPinecone, getOrCreateIndex, INDEX_NAME } from '@/lib/pinecone'
@@ -64,8 +63,13 @@ async function seed(url: string, limit: number, options: SeedOptions) {
 
 async function embedDocument(doc: Document): Promise<PineconeRecord> {
   try {
-    // Generate OpenAI embeddings for the document content
-    const embedding = await getEmbeddings(doc.pageContent)
+    let embedding
+    try {
+      embedding = await getEmbeddings(doc.pageContent)
+    } catch (error) {
+      console.error('Error embedding document:', error)
+      throw error
+    }
 
     // Create a hash of the document content
     const hash = md5(doc.pageContent)

@@ -332,16 +332,18 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
       <div className="flex flex-col w-full">
-        {cards.map((card, index) => (
-          <Card
-            key={index}
-            card={card}
-            index={index}
-            context={null}
-            id={card.id}
-          />
-        ))}
-        {cards.length > 0 && (
+        {cards &&
+          cards.length > 0 &&
+          cards.map((card, index) => (
+            <Card
+              key={index}
+              card={card}
+              index={index}
+              context={null}
+              id={card.id}
+            />
+          ))}
+        {cards && cards.length > 0 && (
           <div className="text-[#72788D]">End of results</div>
         )}
       </div>
