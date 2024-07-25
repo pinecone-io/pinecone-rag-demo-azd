@@ -2,23 +2,13 @@ import { OpenAIClient, AzureKeyCredential } from '@azure/openai'
 
 const endpoint = process.env.AZURE_OPENAI_ENDPOINT || ''
 const apiKey = process.env.AZURE_OPENAI_API_KEY || ''
+const embeddingModel = process.env.AZURE_OPENAI_EMBEDDING_MODEL || ''
 
 export async function getEmbeddings(input: string) {
-  console.log('Getting embeddings for input:', input)
-  console.log('Endpoint:', endpoint)
-  console.log('API Key:', apiKey)
-
-  // Ensure this code runs only in the browser
-  /*if (typeof navigator === 'undefined') {
-    global.navigator = {
-      userAgent: 'Node.js',
-      userAgentData: {
-        platform: 'Node.js',
-        brands: [{ brand: 'Node.js', version: '14' }],
-        mobile: false
-      }
-    } as any
-  }*/
+  //console.log('Getting embeddings for input:', input)
+  //console.log('Endpoint:', endpoint)
+  //console.log('API Key:', apiKey)
+  //console.log('embeddingModel:', embeddingModel)
 
   let client: OpenAIClient
   try {
@@ -29,7 +19,7 @@ export async function getEmbeddings(input: string) {
   }
 
   try {
-    const response = await client.getEmbeddings('text-embedding-ada-002', [
+    const response = await client.getEmbeddings(embeddingModel, [
       input.replace(/\n/g, ' ')
     ])
     return response.data[0].embedding as number[]

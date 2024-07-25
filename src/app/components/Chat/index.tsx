@@ -1,24 +1,23 @@
-import AppContext from "@/appContext";
-import type { PineconeRecord } from "@pinecone-database/pinecone";
-import React, { ChangeEvent, FormEvent, useContext, useRef } from "react";
-import ChatInput from "./ChatInput";
-import ChatWrapper, { ChatInterface } from "./ChatWrapper";
+import AppContext from '@/appContext'
+import type { PineconeRecord } from '@pinecone-database/pinecone'
+import React, { ChangeEvent, FormEvent, useContext, useRef } from 'react'
+import ChatInput from './ChatInput'
+import ChatWrapper, { ChatInterface } from './ChatWrapper'
 
 interface ChatProps {
-  setContext: (data: { context: PineconeRecord[] }[]) => void;
-  context: { context: PineconeRecord[] }[] | null;
+  setContext: (data: { context: PineconeRecord[] }[]) => void
+  context: { context: PineconeRecord[] }[] | null
 }
 
 const Chat: React.FC<ChatProps> = ({ setContext, context }) => {
+  const chatWithContextRef = useRef<ChatInterface | null>(null)
+  const chatWithoutContextRef = useRef<ChatInterface | null>(null)
 
-  const chatWithContextRef = useRef<ChatInterface | null>(null);
-  const chatWithoutContextRef = useRef<ChatInterface | null>(null);
+  const { totalRecords } = useContext(AppContext)
 
-  const { totalRecords } = useContext(AppContext);
-
-  const [input, setInput] = React.useState<string>("")
+  const [input, setInput] = React.useState<string>('')
   const onMessageSubmit = (e: FormEvent<HTMLFormElement>) => {
-    setInput("")
+    setInput('')
     chatWithContextRef.current?.handleMessageSubmit(e)
     chatWithoutContextRef.current?.handleMessageSubmit(e)
   }
@@ -33,17 +32,31 @@ const Chat: React.FC<ChatProps> = ({ setContext, context }) => {
     <div id="chat" className="flex flex-col w-full h-full">
       <div className="flex flex-grow h-full h-max-screen overflow-auto">
         <div className="w-1/2">
-          <ChatWrapper ref={chatWithoutContextRef} withContext={true} setContext={setContext} context={context} />
+          <ChatWrapper
+            ref={chatWithoutContextRef}
+            withContext={true}
+            setContext={setContext}
+            context={context}
+          />
         </div>
         <div className="w-1/2">
-          <ChatWrapper ref={chatWithContextRef} withContext={false} setContext={setContext} />
+          <ChatWrapper
+            ref={chatWithContextRef}
+            withContext={false}
+            setContext={setContext}
+          />
         </div>
       </div>
       <div className="w-full">
-        <ChatInput input={input} handleInputChange={onInputChange} handleMessageSubmit={onMessageSubmit} showIndexMessage={totalRecords === 0} />
+        <ChatInput
+          input={input}
+          handleInputChange={onInputChange}
+          handleMessageSubmit={onMessageSubmit}
+          showIndexMessage={totalRecords === 0}
+        />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Chat;
+export default Chat

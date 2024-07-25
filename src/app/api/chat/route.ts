@@ -1,22 +1,20 @@
 import { Metadata, getContext } from '@/services/context'
 import type { PineconeRecord } from '@pinecone-database/pinecone'
-import {
-  Message,
-  OpenAIStream,
-  StreamingTextResponse,
-  experimental_StreamData
-} from 'ai'
+import { Message } from 'ai'
 import { OpenAIClient, AzureKeyCredential } from '@azure/openai'
 
-const endpoint = process.env['ENDPOINT'] || 'text-embedding-ada-002'
-const azureApiKey = process.env['AZURE_API_KEY'] || '<api key>'
-console.log('endpoint', endpoint)
-console.log('azureApiKey', azureApiKey)
+const endpoint = process.env['AZURE_OPENAI_ENDPOINT'] || ''
+const azureApiKey = process.env['AZURE_OPENAI_API_KEY'] || ''
+const deploymentId = process.env['AZURE_OPENAI_DEPLOYMENT_ID'] || 'gpt-4o'
 
-// Create an OpenAI API client (that's edge friendly!)
+// Create an Azure OpenAI API client
 const client = new OpenAIClient(endpoint, new AzureKeyCredential(azureApiKey))
 
 export async function POST(req: Request) {
+  if (!endpoint || !azureApiKey) {
+    throw new Error('Azure OpenAI endpoint and API key must be set')
+  }
+
   try {
     const { messages, withContext, messageId } = await req.json()
     // Get the last message
@@ -27,7 +25,7 @@ export async function POST(req: Request) {
       ? await getContext(lastMessage.content, '', 3000, 0.8, false)
       : ''
 
-    console.log('withContext', context.length)
+    //console.log('withContext', context.length)
 
     const docs =
       withContext && context.length > 0
@@ -64,37 +62,29 @@ export async function POST(req: Request) {
       return rest
     })
 
-    // Ask OpenAI for a streaming chat completion given the prompt
-    const deploymentId = 'text-embedding-ada-002'
-    console.log('client', client)
+    // Ask Azure OpenAI for a streaming chat completion given the prompt
     const events = await client.streamChatCompletions(
       deploymentId,
       [
         ...prompt,
-        ...sanitizedMessages.filter((message: Message) => message.role === 'user')
+        ...sanitizedMessages.filter(
+          (message: Message) => message.role === 'user'
+        )
       ],
       { maxTokens: 128 }
     )
-    const data = new experimental_StreamData()
 
-    /*const stream = OpenAIStream(response, {
-      onFinal(completion) {
-        // IMPORTANT! you must close StreamData manually or the response will never finish.
-        data.close()
-      },
-      // IMPORTANT! until this is stable, you must explicitly opt in to supporting streamData.
-      experimental_streamData: true
-    })
-*/
-    if (withContext) {
-      data.append({
-        context: [...(context as PineconeRecord[])]
-      })
+    let responseContent: string = ''
+    for await (const event of events) {
+      for (const choice of event.choices) {
+        responseContent += choice.delta?.content || ''
+      }
     }
 
-    // IMPORTANT! If you aren't using StreamingTextResponse, you MUST have the `X-Experimental-Stream-Data: 'true'` header
-    // in your response so the client uses the correct parsing logic.
-    return new StreamingTextResponse(events, {}, data)
+    const response = new Response(responseContent, {
+      headers: { 'Content-Type': 'application/json' }
+    })
+    return response
   } catch (e) {
     throw e
   }
