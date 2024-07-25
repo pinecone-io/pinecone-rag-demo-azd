@@ -13,6 +13,7 @@
   "dependencies": {
     "@azure/openai": "^1.0.0-beta.12",
     "@azure/core-rest-pipeline": "1.16.0",
+    "@azure/identity": ">=4.2.1",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@material-tailwind/react": "^2.1.8",
