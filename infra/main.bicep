@@ -27,6 +27,10 @@ param webAppServiceCdnEndpointName string = ''
 param webAppServiceCdnProfileName string = ''
 param webAppServiceIdentityName string = ''
 
+param azureOpenAIChatGptModelVersion string ='0613'
+param chatGptDeploymentCapacity int = 10
+
+
 // Load abbreviations to be used when naming resources
 // See: https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-abbreviations
 var abbrs = loadJsonContent('./abbreviations.json')
@@ -158,6 +162,31 @@ module webAppServiceCdn './cdn/cdn.bicep' = {
   }
 }
 
+module azureOpenAi 'core/ai/azure-openai.bicep' = {
+  name: 'openai'
+  scope: resourceGroup
+  params: {
+    name: '${abbrs.cognitiveServices.cognitiveServicesAccounts}${resourceToken}'
+    location: location
+    tags: tags
+    sku: {
+      name: 'S0'
+    }
+    deployments: [{
+      name: 'gpt-35-turbo-16k'
+      model: {
+        format: 'OpenAI'
+        name: 'gpt-35-turbo-16k'
+        version: azureOpenAIChatGptModelVersion
+      }
+      sku: {
+        name: 'Standard'
+        capacity: chatGptDeploymentCapacity
+      }
+    }]
+  }
+}
+
 module webAppServiceContainerApp './web-app.bicep' = {
   name: '${webAppServiceName}-container-app'
   scope: resourceGroup
@@ -240,6 +269,14 @@ module webAppServiceContainerApp './web-app.bicep' = {
         name: 'PINECONE_REGION'
         value: pineconeRegion
       }
+      {
+        name: 'AZURE_OPENAI_API_KEY'
+        value: azureOpenAi.outputs.apiKey
+      }
+      {
+        name: 'AZURE_OPENAI_ENDPOINT'
+        value: azureOpenAi.outputs.endpoint
+      }
     ]
     targetPort: 3000
   }
@@ -267,3 +304,7 @@ output NEXT_PUBLIC_BUILD_ID string = buildId
 output NEXT_PUBLIC_CDN_HOSTNAME string = webAppServiceCdn.outputs.endpointHostName
 output NEXT_PUBLIC_CDN_URL string = webAppServiceCdn.outputs.endpointUri
 output SERVICE_WEB_ENDPOINTS string[] = [webAppServiceUri]
+
+// Azure OpenAI outputs
+output AZURE_OPENAI_API_KEY string = azureOpenAi.outputs.apiKey
+output AZURE_OPENAI_ENDPOINT string = azureOpenAi.outputs.endpoint

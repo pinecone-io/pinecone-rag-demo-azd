@@ -17,5 +17,10 @@
   },
   "security": {
     "user_assigned_identity": "id"
+  },
+  "cognitiveServices": {
+    "cognitiveServicesAccounts": "cog-",
+    "cognitiveServicesFormRecognizer": "cog-fr-",
+    "cognitiveServicesTextAnalytics": "cog-ta-"
   }
 }

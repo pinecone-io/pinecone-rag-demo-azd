@@ -50,7 +50,7 @@ export async function getOrCreateIndex(
   console.log('Checking for index ', indexName)
   const indexList = await pc.listIndexes()
   const indexes = indexList.indexes
-  console.log('Indexes: ', indexes)
+  //console.log('Indexes: ', indexes)
   const indexExists =
     indexes && indexes.some((index) => index.name === indexName)
   if (!indexExists) {

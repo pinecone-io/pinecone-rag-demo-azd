@@ -20,12 +20,18 @@ Before starting, be sure you have set all of the required secrets and environmen
 The minimum environment variables and secrets you will need to set are:
 
 - PINECONE_API_KEY: You can retrieve this from your [Pinecone project's list of API keys](https://app.pinecone.io/-/projects/-/keys).
-- OPENAI_API_KEY: From [your OpenAI project's keys](https://platform.openai.com/api-keys)
 - PINECONE_REGION: The region your index is in (or will be in).
 - PINECONE_INDEX: The name of your index. Defaults to "pinecone-azd-rag-demo".
+- AZURE_OPENAI_API_KEY: From your Azure OpenAI keys.
+- AZURE_OPENAI_ENDPOINT: The endpoint of your Azure OpenAI deployment. This is dependent on your resource group and should be in the format "https://<your-endpoint>.openai.azure.com/".
+- AZURE_OPENAI_EMBEDDING_MODEL: The name of the Azure OpenAI embedding model to use. Defaults to "text-embedding-ada-002"
+- AZURE_OPENAI_CHAT_MODEL: The name of the Azure OpenAI chat model to use. Defaults to "gpt-4o"
 - AZURE_SUBSCRIPTION_ID: Run `azd config show` locally to retrieve your subscription ID.
 - AZURE_ENV_NAME: The name of your Azure environment.
 - AZURE_LOCATION: The Azure region you are using.
+
+[!NOTE]
+In the case of the Azure OpenAI endpoint and models, it's recommended to create a new resource group for this demo and use the default models and deployment provided by Azure.
 
 There are other variables available but those are optional.
 
