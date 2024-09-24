@@ -21,6 +21,7 @@ param containerAppEnvironmentName string = ''
 param containerAppName string = ''
 param containerRegistryName string = ''
 param logAnalyticsWorkspaceName string = ''
+param keyVaultName string = ''
 param resourceGroupName string = ''
 
 param webAppServiceCdnEndpointName string = ''
@@ -38,9 +39,9 @@ var projectName = envVars.PROJECT_NAME
 var webAppServiceName = envVars.SERVICE_WEB_SERVICE_NAME
 
 var pineconeApiKey = envVars.PINECONE_API_KEY
-var openaiApiKey = envVars.OPENAI_API_KEY
 var pineconeIndexName = envVars.PINECONE_INDEX
 var pineconeRegion = envVars.PINECONE_REGION
+var pineconeCloud = envVars.PINECONE_CLOUD
 
 // Generate a unique token to be used in naming resources
 var resourceToken = take(toLower(uniqueString(subscription().id, environmentName, location, projectName)), 4)
@@ -51,6 +52,8 @@ func buildResourceGroupName(abbr string, projName string, envName string) string
 
 func buildProjectResourceName(abbr string, projName string, envName string, token string, useDelimiter bool) string => toLower(join([ abbr, projName, envName, token ], useDelimiter ? '-' : ''))
 
+func buildContainerAppName(abbr string, projName string, svcName string, envName string, token string) string => take(toLower(replace(join([ abbr, projName, svcName, envName, token ], '-'), '--', '-')), 32)
+
 func buildServiceResourceName(abbr string, projName string, svcName string, envName string, token string, useDelimiter bool) string => toLower(join([ abbr, projName, svcName, envName, token ], useDelimiter ? '-' : ''))
 
 func stringOrDefault(value string, default string) string => empty(value) ? default : value
@@ -58,6 +61,8 @@ func stringOrDefault(value string, default string) string => empty(value) ? defa
 func intOrDefault(value string, default int) int => empty(value) ? default : int(value)
 
 func boolOrDefault(value string, default bool) bool => empty(value) ? default : bool(value)
+
+func sanitizeKeyVaultName(name string) string => take(replace(replace(name, '-', ''), '_', ''), 24)
 
 // Tags that should be applied to all resources.
 //
@@ -85,17 +90,6 @@ module logAnalyticsWorkspace './insights/log-analytics-workspace.bicep' = {
     name: !empty(logAnalyticsWorkspaceName) ? logAnalyticsWorkspaceName : buildProjectResourceName(abbrs.insights.log_analytics_workspace, projectName, environmentName, resourceToken, true)
     location: location
     tags: tags
-  }
-}
-
-module appInsights './insights/application-insights.bicep' = {
-  name: 'appInsights'
-  scope: resourceGroup
-  params: {
-    name: !empty(applicationInsightsName) ? applicationInsightsName : buildProjectResourceName(abbrs.insights.application_insights, projectName, environmentName, resourceToken, true)
-    location: location
-    tags: tags
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
   }
 }
 
@@ -137,7 +131,7 @@ module containerRegistry './containers/container-registry.bicep' = {
 }
 
 // We need to compute the origin hostname for the web app CDN - if a custom domain name is used, then we can use that, otherwise we need to use the default container app hostname
-var webAppServiceContainerAppName = !empty(containerAppName) ? containerAppName : buildServiceResourceName(abbrs.containers.container_app, projectName, webAppServiceName, environmentName, resourceToken, true)
+var webAppServiceContainerAppName = !empty(containerAppName) ? containerAppName : buildContainerAppName(abbrs.containers.container_app, projectName, webAppServiceName, environmentName, resourceToken)
 
 var webAppServiceHostName = !empty(webAppServiceCustomDomainName) ? webAppServiceCustomDomainName : '${webAppServiceContainerAppName}.${containerAppEnvironment.outputs.defaultDomain}'
 
@@ -157,6 +151,56 @@ module webAppServiceCdn './cdn/cdn.bicep' = {
     buildId: buildId
   }
 }
+
+module azureOpenAI './ai/azure-openai.bicep' = {
+  name: 'azureOpenAI'
+  scope: resourceGroup
+  params: {
+    name: 'openai-${resourceToken}'
+    location: location
+    tags: tags
+    gptDeploymentName: 'gpt-4o-mini'
+    gptModelName: 'gpt-4o-mini'
+    embeddingDeploymentName: 'text-embedding-3-small'
+    embeddingModelName: 'text-embedding-3-small'
+  }
+}
+
+module keyVault './security/key-vault.bicep' = {
+  name: 'keyVault'
+  scope: resourceGroup
+  params: {
+    name: !empty(keyVaultName) ? sanitizeKeyVaultName(keyVaultName) : sanitizeKeyVaultName(buildProjectResourceName(abbrs.key_vault.key_vault, projectName, environmentName, resourceToken, false))
+    location: location
+    tags: tags
+    openAIResourceName: azureOpenAI.outputs.name
+    pineconeApiKey: pineconeApiKey
+  }
+}
+module appInsights './insights/application-insights.bicep' = {
+  name: 'appInsights'
+  scope: resourceGroup
+  params: {
+    name: !empty(applicationInsightsName) ? applicationInsightsName : buildProjectResourceName(abbrs.insights.application_insights, projectName, environmentName, resourceToken, true)
+    location: location
+    tags: tags
+    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.id
+  }
+}
+
+module pineconeIndex './ai/pinecone.bicep' = {
+  name: 'pineconeIndex'
+  scope: resourceGroup
+  params: {
+    keyVaultName: keyVaultName
+    pineconeIndexName: pineconeIndexName
+    pineconeRegion: pineconeRegion
+    pineconeCloud: pineconeCloud
+  }
+}
+
+output gptDeploymentName string = azureOpenAI.outputs.gptDeploymentName
+output apiVersion string = azureOpenAI.outputs.apiVersion
 
 module webAppServiceContainerApp './web-app.bicep' = {
   name: '${webAppServiceName}-container-app'
@@ -225,20 +269,32 @@ module webAppServiceContainerApp './web-app.bicep' = {
         value: webAppServiceName
       }
       {
-        name: 'PINECONE_API_KEY'
-        value: pineconeApiKey
-      }
-      {
-        name: 'OPENAI_API_KEY'
-        value: openaiApiKey
-      }
-      {
         name: 'INDEX_NAME'
         value: pineconeIndexName
       }
       {
         name: 'PINECONE_REGION'
         value: pineconeRegion
+      }
+      {
+        name: 'AZURE_OPENAI_ENDPOINT'
+        value: azureOpenAI.outputs.endpoint
+      }
+      {
+        name: 'AZURE_OPENAI_GPT_DEPLOYMENT'
+        value: azureOpenAI.outputs.gptDeploymentName
+      }
+      {
+        name: 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT'
+        value: azureOpenAI.outputs.embeddingDeploymentName
+      }
+      {
+        name: 'AZURE_OPENAI_API_VERSION'
+        value: azureOpenAI.outputs.apiVersion
+      }
+      {
+        name: 'AZURE_KEY_VAULT_NAME'
+        value: keyVaultName
       }
     ]
     targetPort: 3000
@@ -258,8 +314,8 @@ output AZURE_CONTAINER_STATIC_IP string = containerAppEnvironment.outputs.static
 output AZURE_CONTAINER_DOMAIN_VERIFICATION_CODE string = containerAppEnvironment.outputs.domainVerificationCode
 
 // Web app outputs
-output APPLICATIONINSIGHTS_CONNECTION_STRING string = appInsights.outputs.connectionString
 output AZURE_WEB_APP_FQDN string = webAppServiceContainerApp.outputs.fqdn
+output APPLICATIONINSIGHTS_CONNECTION_STRING string = appInsights.outputs.connectionString
 output NEXT_PUBLIC_APP_ENV string = environmentName
 output NEXT_PUBLIC_APPLICATIONINSIGHTS_CONNECTION_STRING string = appInsights.outputs.connectionString
 output NEXT_PUBLIC_BASE_URL string = webAppServiceUri
@@ -267,3 +323,13 @@ output NEXT_PUBLIC_BUILD_ID string = buildId
 output NEXT_PUBLIC_CDN_HOSTNAME string = webAppServiceCdn.outputs.endpointHostName
 output NEXT_PUBLIC_CDN_URL string = webAppServiceCdn.outputs.endpointUri
 output SERVICE_WEB_ENDPOINTS string[] = [webAppServiceUri]
+
+// AI outputs
+output AZURE_OPENAI_GPT_DEPLOYMENT string = envVars.AZURE_OPENAI_GPT_DEPLOYMENT
+output AZURE_OPENAI_EMBEDDING_DEPLOYMENT string = envVars.AZURE_OPENAI_EMBEDDING_DEPLOYMENT
+output AZURE_OPENAI_ENDPOINT string = envVars.AZURE_OPENAI_ENDPOINT
+output PINECONE_INDEX string = envVars.PINECONE_INDEX
+output PINECONE_REGION string = envVars.PINECONE_REGION
+output PINECONE_CLOUD string = envVars.PINECONE_CLOUD
+output INDEX_CREATED bool = pineconeIndex.outputs.indexCreated
+output AZURE_KEY_VAULT_NAME string = keyVaultName

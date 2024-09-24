@@ -10,7 +10,7 @@ import exp from 'constants'
 
 const PINECONE_REGION = process.env.PINECONE_REGION || 'us-west-2'
 const PINECONE_CLOUD =
-  (process.env.PINECONE_CLOUD as 'aws' | 'gcp' | 'azure') || 'aws'
+  (process.env.PINECONE_CLOUD as 'aws' | 'gcp' | 'azure') || 'azure'
 export const INDEX_NAME = process.env.PINECONE_INDEX || 'pinecone-azd-rag-demo'
 
 export type IndexProperties = {

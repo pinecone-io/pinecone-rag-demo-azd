@@ -20,12 +20,7 @@ Before starting, be sure you have set all of the required secrets and environmen
 The minimum environment variables and secrets you will need to set are:
 
 - PINECONE_API_KEY: You can retrieve this from your [Pinecone project's list of API keys](https://app.pinecone.io/-/projects/-/keys).
-- OPENAI_API_KEY: From [your OpenAI project's keys](https://platform.openai.com/api-keys)
-- PINECONE_REGION: The region your index is in (or will be in).
 - PINECONE_INDEX: The name of your index. Defaults to "pinecone-azd-rag-demo".
-- AZURE_SUBSCRIPTION_ID: Run `azd config show` locally to retrieve your subscription ID.
-- AZURE_ENV_NAME: The name of your Azure environment.
-- AZURE_LOCATION: The Azure region you are using.
 
 There are other variables available but those are optional.
 

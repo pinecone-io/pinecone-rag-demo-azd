@@ -9,6 +9,6 @@ export async function POST(req: Request) {
     const documents = await seed(url, 1, options)
     return NextResponse.json({ success: true, documents })
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Failed crawling" })
+    return NextResponse.json({ success: false, error: 'Failed crawling' })
   }
 }

@@ -10,7 +10,7 @@ remove_quotes() {
 # Function to read env vars from a file and store them in a global array
 read_env_vars() {
     local path=$1
-    local -a required_vars=("PINECONE_API_KEY" "OPENAI_API_KEY" "PINECONE_REGION" "PINECONE_INDEX_NAME")
+    local -a required_vars=("PINECONE_API_KEY" "PINECONE_REGION" "PINECONE_INDEX_NAME")
     local -a temp_vars=()
 
     if [[ ! -f $path ]]; then
@@ -88,7 +88,7 @@ env_vars=()
 script_dir="$(dirname "$(readlink -f "$0")")"
 
 # Create a `.env.local` file by merging values from the current environment with a template
-template_path="$script_dir/../../.env.local.template"
+template_path="$script_dir/../../.env.template"
 
 if [[ ! -f $template_path ]]; then
     # Template file does not exist so we can't go any further

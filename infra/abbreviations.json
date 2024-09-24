@@ -17,5 +17,8 @@
   },
   "security": {
     "user_assigned_identity": "id"
+  },
+  "key_vault": {
+    "key_vault": "kv"
   }
 }
